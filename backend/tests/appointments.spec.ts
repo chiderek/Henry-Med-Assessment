@@ -58,10 +58,9 @@ describe("Appointment Controller", () => {
                 endDateTime: new Date().toISOString(),
             };
 
-            //use toThrowError, unsure if what error we want to actually throw. Right now, it'd be the database error
-            expect(async () => {
-                await axios.post("/Appointments", request);
-            }).toThrowError();
+            const result = await axios.post("/Appointments", request);
+
+            expect(result.status).toEqual(400);
         })
     
         it("should throw when creating an appointment with no end time", async () => {
@@ -70,10 +69,9 @@ describe("Appointment Controller", () => {
                 startDateTime: new Date().toISOString(),
             };
             
-            //use toThrowError, unsure if what error we want to actually throw. Right now, it'd be the database error
-            expect(async () => {
-                await axios.post("/Appointments", request);
-            }).toThrowError();
+            const result = await axios.post("/Appointments", request);
+
+            expect(result.status).toEqual(400);
         })
     })
 
@@ -91,7 +89,6 @@ describe("Appointment Controller", () => {
         it("should throw an error when deleting an appointment that does not exist", async () => {
             //todo: this id "could" be valid eventually, what's a better one to use?
             const result = await axios.delete(`/Appointments/${9999999999}`);
-            //Choosing 400 since it's technically a bad request. Could be something different
             expect(result.status).toEqual(404);
         })
         it("should throw an error when deleting an appointment with a non-integer id", async () => {
@@ -102,17 +99,98 @@ describe("Appointment Controller", () => {
     })
 
     describe("Update", () => {
-        it("should update an appointment successfully", async () => {})
-        it("should not update an apointment if the appointment does not exist", async () => {})
-        it("should throw an error when updating appointment with an invalid StartDateTime", async () => {})
-        it("should throw an error when updating appointment with an invalid EndDateTime", async () => {})
+        it("should update an appointment successfully", async () => {
+            const appointment = await createAppointment();
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const request: Appointment = {
+                description: "Updated appointment description",
+                startDateTime: tomorrow.toISOString(),
+                endDateTime: tomorrow.toISOString()
+            };
+
+            const result = await axios.put(`/Appointments/${appointment.id}`, request);
+
+            expect(result.status).toEqual(200);
+            expect(result.data.description).toEqual(request.description);
+            expect(result.data.startDateTime).toEqual(request.startDateTime);
+            expect(result.data.endDateTime).toEqual(request.endDateTime);
+        })
+        it("should not update an apointment if the appointment does not exist", async () => {
+            //todo: this id "could" be valid eventually, what's a better one to use?
+            const result = await axios.put(`/Appointments/${9999999999}`, {});
+            expect(result.status).toEqual(404);
+        })
+        it("should throw an error when updating appointment with an invalid StartDateTime", async () => {
+            const appointment = await createAppointment();
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const request: Appointment = {
+                description: "Updated appointment description",
+                startDateTime: "",
+                endDateTime: tomorrow.toISOString()
+            };
+
+            const result = await axios.put(`/Appointments/${appointment.id}`, request);
+
+            expect(result.status).toEqual(400);
+        })
+        it("should throw an error when updating appointment with an invalid EndDateTime", async () => {
+            const appointment = await createAppointment();
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const request: Appointment = {
+                description: "Updated appointment description",
+                startDateTime: tomorrow.toISOString(),
+                endDateTime: ""
+            };
+
+            const result = await axios.put(`/Appointments/${appointment.id}`, request);
+
+            expect(result.status).toEqual(400);
+        })
     })
 
     describe("Get", () => {
-        it("should be able to retrieve an appointment by its `id`", async () => { })
-        it("should be able to retrieve a list of appointments", async () => { })
-        it("should be able to retrieve a big list of appointments (1000+)", async () => { })
-        it("should return `Not Found` when an appointment does not exist", async () => {})
+        it("should be able to retrieve an appointment by its `id`", async () => { 
+            const appointment = await createAppointment();
+
+            const result = await axios.get(`/Appointment/${appointment.id}`);
+
+            expect(result.status).toEqual(200);
+            expect(result.data.id).toEqual(appointment.id);
+            expect(result.data.description).toEqual(appointment.description);
+            expect(result.data.startDateTime).toEqual(appointment.startDateTime);
+            expect(result.data.endDateTime).toEqual(appointment.endDateTime);
+        })
+        it("should be able to retrieve a list of appointments", async () => {
+            //Either should have a way to to pre-seed data into the database, or we have to create test data
+            //Not in a way where a database has to be restored, this could potentially fail on a fresh machine
+            const appointment1 = await createAppointment();
+            const appointment2 = await createAppointment();
+
+            const result = await axios.get("/Appointments");
+            
+            expect(result.status).toEqual(200);
+            expect(result.data.length).toBeGreaterThanOrEqual(2);
+        })
+        it("should be able to retrieve a big list of appointments (1000+)", async () => { 
+            //Assumption is that there is a way to create 1000+ appointments before this test is run
+            //We do not want to create 1000+ appointments at the point of test generation here if it can be avoided
+            const result = await axios.get("/Appointments");
+
+            expect(result.status).toEqual(200);
+            expect(result.data.length).toBeGreaterThanOrEqual(1000);
+        })
+        it("should return `Not Found` when an appointment does not exist", async () => {
+            //todo: this id "could" be valid eventually, what's a better one to use?
+            const result = await axios.get(`/Appointment/${9999999999}`);
+
+            expect(result.status).toEqual(404);
+        })
     })
 
     async function createAppointment(): Promise<Appointment> {

@@ -1,7 +1,10 @@
 import type { Config } from "jest";
 
 const config: Config = {
-    // testMatch: ["*.spec.ts"],
+    transform: {
+        "^.+\\.tsx?$": "ts-jest",
+        "^.+\\.(js|jsx)$": "babel-jest",
+    },
     testTimeout: 1000
 }
 
