@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Appointment } from "./Appointment"
+import { v4 } from "uuid";
 
 /**
  * TODO
@@ -77,9 +78,27 @@ describe("Appointment Controller", () => {
     })
 
     describe("Delete", () => {
-        it("should delete an appointment successfully", async () => {})
-        it("should throw an error when deleting an appointment that does not exist", async () => {})
-        it("should throw an error when deleting an appointment with a non-integer id", async () => {})
+        it("should delete an appointment successfully", async () => {
+            const appointment = await createAppointment();
+
+            const result = await axios.delete(`/Appointments/${appointment.id}`);
+            expect(result.status).toEqual(200);
+
+            /**
+             * If really needed, the GET endpoint could be used as a 2nd layer of validation
+             */
+        })
+        it("should throw an error when deleting an appointment that does not exist", async () => {
+            //todo: this id "could" be valid eventually, what's a better one to use?
+            const result = await axios.delete(`/Appointments/${9999999999}`);
+            //Choosing 400 since it's technically a bad request. Could be something different
+            expect(result.status).toEqual(404);
+        })
+        it("should throw an error when deleting an appointment with a non-integer id", async () => {
+            const result = await axios.delete(`/Appointments/invalidId`);
+            //Choosing 400 since it's technically a bad request. Could be something different
+            expect(result.status).toEqual(400);
+        })
     })
 
     describe("Update", () => {
@@ -95,4 +114,19 @@ describe("Appointment Controller", () => {
         it("should be able to retrieve a big list of appointments (1000+)", async () => { })
         it("should return `Not Found` when an appointment does not exist", async () => {})
     })
+
+    async function createAppointment(): Promise<Appointment> {
+        const request: Appointment = {
+            description: v4(),
+            startDateTime: new Date().toISOString(),
+            endDateTime: new Date().toISOString(),
+        };
+
+        const result = await axios.post("/Appointments", request);
+        expect(result.status).toEqual(200);
+        expect(result.data.description).toEqual(request.description);
+        expect(result.data.id).toBeDefined();
+
+        return result.data;
+    }
 })
