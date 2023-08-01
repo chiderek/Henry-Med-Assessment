@@ -35,7 +35,7 @@ describe('States Page', () => {
     }
   });
 
-  it.only('Other should redirect to a form to connect with a licensed provider', () => {
+  it('Other should redirect to a form to connect with a licensed provider', () => {
     cy.get("#state-other-button").click();
     //Wait for the submit button to be visible
     cy.origin("https://ft4aaz62fi7.typeform.com", () => {
