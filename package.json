@@ -4,6 +4,7 @@
   "description": "Take home assessment",
   "main": "index.js",
   "scripts": {
+    "cypress:run": "cypress run -b chrome",
     "cypress:open": "cypress open",
     "api:test": "jest"
   },
